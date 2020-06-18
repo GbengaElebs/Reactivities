@@ -27,11 +27,17 @@ namespace API
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+
             services.AddControllers();//dependency injection container services we need to add in our application that we want available everywhere
             services.AddDbContext<DataContext>(opt => 
             {
                 opt.UseSqlite(Configuration.GetConnectionString
                 ("DefaultConnection"));
+            });
+            services.AddCors(opt => {
+                opt.AddPolicy("CorsPolicy",policy => {
+                    policy.AllowAnyHeader().AllowAnyMethod().WithOrigins("http://localhost:3000");
+                });
             });
         }
 
@@ -45,10 +51,13 @@ namespace API
             ///middle ware that we add to the pipeline
 
             //app.UseHttpsRedirection();////use selfsigned request routes request to https
-
+             
             app.UseRouting();////middleware to tell application to use routing
 
             app.UseAuthorization();
+
+            app.UseCors("CorsPolicy");
+
 
             app.UseEndpoints(endpoints =>
             {
