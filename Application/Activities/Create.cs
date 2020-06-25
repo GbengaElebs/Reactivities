@@ -35,11 +35,11 @@ namespace Application.Activities
                  {
                      Id = request.Id,
                      Title = request.Title,
-                      Description = request.Description,
-                       Category = request.Category,
-                        DateTime = request.DateTime,
-                        City = request.City,
-                         Venue = request.Venue
+                     Description = request.Description,
+                     Category = request.Category,
+                     DateTime = request.DateTime,
+                     City = request.City,
+                     Venue = request.Venue
                  };
 
                  _context.Activities.Add(activity);
