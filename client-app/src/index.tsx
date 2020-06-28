@@ -3,14 +3,18 @@ import ReactDOM from "react-dom";
 import App from "./app/layout/App";
 import * as serviceWorker from "./serviceWorker";
 import "./app/layout/styles.css";
-import { BrowserRouter } from "react-router-dom";
+import 'react-toastify/dist/ReactToastify.min.css'
+import { Router } from "react-router-dom";
+import { createBrowserHistory } from "history";
 import ScrollToTop from './app/layout/ScollToTop';
 
+export const history = createBrowserHistory();
+
 ReactDOM.render(
-  <BrowserRouter>
+  <Router history={history}>
     <ScrollToTop/>
     <App />
-  </BrowserRouter>,
+  </Router>,
   document.getElementById("root")
 );
 /// render the app component but where? where it is in root

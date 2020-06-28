@@ -24,7 +24,9 @@ class ActivityStore {
     );
     return Object.entries(sortedActivities.reduce((activities, selectedActivity) => {
        const date = selectedActivity.dateTime.split('T')[0];
+       //activities ={...activities,[date]:[selectedActivity]};
        activities[date] = activities[date] ? [...activities[date], selectedActivity] : [selectedActivity];
+       ////if the current date is equal to a date in the array it should append it...if not form a new array.and assign it to the value...
        return activities;
     },{} as {[key: string]: IActivity[]}));
     ////return a new object withe a key and the value
