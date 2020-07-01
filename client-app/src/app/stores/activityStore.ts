@@ -2,6 +2,7 @@ import { observable, action, computed, configure, runInAction } from "mobx";
 import { createContext, SyntheticEvent } from "react";
 import { IActivity } from "../Model/activity";
 import agent from "../api/agent";
+import {history} from '../..';
 
 configure({ enforceActions: "always" });
 
@@ -20,10 +21,10 @@ class ActivityStore {
 
   groupActivitiesByDate(activities: IActivity[]) {
     const sortedActivities = activities.sort(
-      (a, b) => Date.parse(a.dateTime) - Date.parse(b.dateTime)
+      (a, b) => a.dateTime!.getTime() - b.dateTime!.getTime()
     );
     return Object.entries(sortedActivities.reduce((activities, selectedActivity) => {
-       const date = selectedActivity.dateTime.split('T')[0];
+       const date = selectedActivity.dateTime!.toISOString().split('T')[0];
        //activities ={...activities,[date]:[selectedActivity]};
        activities[date] = activities[date] ? [...activities[date], selectedActivity] : [selectedActivity];
        ////if the current date is equal to a date in the array it should append it...if not form a new array.and assign it to the value...
@@ -42,8 +43,7 @@ class ActivityStore {
       const activities = await agent.Activities.list();
       runInAction("loading activities", () => {
         activities.forEach((activity) => {
-          activity.dateTime = activity.dateTime.split(".")[0];
-          this.activityRegistry.set(activity.id, activity);
+          activity.dateTime = new Date(activity.dateTime!);
         });
         this.loadingInitial = false;
       });
@@ -59,13 +59,17 @@ class ActivityStore {
     let activity = this.getActivity(id);
     if (activity) {
       this.selectedActivity = activity;
+      return activity;
     } else {
       this.loadingInitial = true;
       try {
         activity = await agent.Activities.details(id);
         runInAction("get Activity", () => {
+          activity.dateTime= new Date(activity.dateTime)
           this.selectedActivity = activity;
+          this.activityRegistry.set(activity.id, activity);
           this.loadingInitial = false;
+          return activity;
         });
       } catch (error) {
         runInAction("getting Activity Error", () => {
@@ -96,6 +100,7 @@ class ActivityStore {
         this.activityRegistry.set(activity.id, activity);
         this.submitting = false;
       });
+      history.push(`/activities/${activity.id}`)
     } catch (error) {
       runInAction("Create activities Error", () => {
         this.submitting = false;
@@ -117,6 +122,7 @@ class ActivityStore {
         this.selectedActivity = activity;
         this.submitting = false;
       });
+      history.push(`/activities/${activity.id}`)
     } catch (error) {
       runInAction("edit Actitivty error", () => {
         this.submitting = false;

@@ -51,6 +51,10 @@ namespace API
 
                 //app.UseDeveloperExceptionPage();
             }
+            ////Middleware is software that's assembled into an app pipeline to handle requests and responses. Each component:
+
+// Chooses whether to pass the request to the next component in the pipeline.
+// Can perform work before and after the next component in the pipeline.
             ///middle ware that we add to the pipeline
 
             //app.UseHttpsRedirection();////use selfsigned request routes request to https

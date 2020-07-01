@@ -16,6 +16,7 @@ namespace API.Middleware
         {
             _logger = logger;
             _next = next;
+            ////The custom middleware component is like any other .NET class with Invoke() method. However, in order to execute next middleware in a sequence, it should have RequestDelegate type parameter in the constructor.
 
         }
 
@@ -28,6 +29,7 @@ namespace API.Middleware
             catch (Exception ex)
             {
                 await HandleExceptionAsync(context, ex,_logger);
+                ///if there is any exception handle it here....
             }
         }
 
