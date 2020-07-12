@@ -10,11 +10,15 @@ namespace Application.User
 {
     public class CurrentUser
     {
-        public class Query : IRequest<User> { }
+        public class Query : IRequest<User> { 
+
+          public string UserName { get; set; }
+
+        }
 
         public class Handler : IRequestHandler<Query, User>
         {
-            private readonly UserManager<AppUser> userManager;
+            private readonly UserManager<AppUser> _userManager;
             private readonly IUserAccessor _userAccessor;
             private readonly IJwtGenerator _jwtGenerator;
 
@@ -23,12 +27,13 @@ namespace Application.User
             {
                 _jwtGenerator = jwtGenerator;
                 _userAccessor = userAccessor;
+                _userManager = userManager;
             }
 
             public async Task<User> Handle(Query request, CancellationToken cancellationToken)
             {
                 ////logic
-                var user = await userManager.FindByNameAsync(_userAccessor.GetCurrentUsername());
+                var user = await _userManager.FindByNameAsync(_userAccessor.GetCurrentUsername());
 
                 return new User 
                 {
