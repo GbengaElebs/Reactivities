@@ -1,13 +1,22 @@
+using System.Text;
 using API.Middleware;
 using Application.Activities;
+using Application.Interfaces;
+using Application.Interfaces.Security;
+using Domain;
 using FluentValidation.AspNetCore;
 using MediatR;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.IdentityModel.Tokens;
 using Persistence;
 
 namespace API
@@ -25,7 +34,10 @@ namespace API
         public void ConfigureServices(IServiceCollection services)
         {
 
-            services.AddControllers()//dependency injection container services we need to add in our application that we want available everywhere
+            services.AddControllers(opt => {
+                var policy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
+                opt.Filters.Add(new AuthorizeFilter(policy));
+            })//dependency injection container services we need to add in our application that we want available everywhere
                     .AddFluentValidation(cfg => {
                         cfg.RegisterValidatorsFromAssemblyContaining<Create>();
                     });
@@ -40,6 +52,27 @@ namespace API
                 });
             });
             services.AddMediatR(typeof(List.Handler).Assembly);////add assemblies of type Handler///mediatR should target the List Handler
+
+            var builder = services.AddIdentityCore<AppUser>();
+            var identityBuilder = new IdentityBuilder(builder.UserType, builder.Services);
+            identityBuilder.AddEntityFrameworkStores<DataContext>();
+            identityBuilder.AddSignInManager<SignInManager<AppUser>>(); 
+
+            services.AddScoped<IJwtGenerator, JwtGenerator>();
+            services.AddScoped<IUserAccessor, UserAccessor>();
+            ////to enable the method to be injected across classes
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["TokenKey"]));
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                    .AddJwtBearer(opt => {
+                        opt.TokenValidationParameters = new TokenValidationParameters
+                        {
+                            ValidateIssuerSigningKey = true,
+                            IssuerSigningKey = key,
+                            ValidateAudience = false,
+                            ValidateIssuer = false
+                        };
+                    });  
+             
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -61,6 +94,7 @@ namespace API
              
             app.UseRouting();////middleware to tell application to use routing
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseCors("CorsPolicy");
@@ -69,6 +103,7 @@ namespace API
             {
                 endpoints.MapControllers();///controller endpoints so the api knows what to do when a request comes into the api and how to routes it
             });
+
         }
     }
 }

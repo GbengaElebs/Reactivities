@@ -2,7 +2,7 @@ import { observable, action, computed, configure, runInAction } from "mobx";
 import { createContext, SyntheticEvent } from "react";
 import { IActivity } from "../Model/activity";
 import agent from "../api/agent";
-import {history} from '../..';
+import { history } from "../..";
 
 configure({ enforceActions: "always" });
 
@@ -15,7 +15,7 @@ class ActivityStore {
 
   @computed get activitiesByDate() {
     return this.groupActivitiesByDate(
-      Array.from(this.activityRegistry.values())
+      Array.from(this.activityRegistry.values())////converts the activity registry to an array
     );
   }
 
@@ -23,17 +23,21 @@ class ActivityStore {
     const sortedActivities = activities.sort(
       (a, b) => a.dateTime!.getTime() - b.dateTime!.getTime()
     );
-    return Object.entries(sortedActivities.reduce((activities, selectedActivity) => {
-       const date = selectedActivity.dateTime!.toISOString().split('T')[0];
-       //activities ={...activities,[date]:[selectedActivity]};
-       activities[date] = activities[date] ? [...activities[date], selectedActivity] : [selectedActivity];
-       ////if the current date is equal to a date in the array it should append it...if not form a new array.and assign it to the value...
-       return activities;
-    },{} as {[key: string]: IActivity[]}));
+    return Object.entries(
+      sortedActivities.reduce((activities, selectedActivity) => {
+        const date = selectedActivity.dateTime!.toISOString().split("T")[0];
+        //activities ={...activities,[date]:[selectedActivity]};
+        activities[date] = activities[date]
+          ? [...activities[date], selectedActivity]
+          : [selectedActivity];
+        ////if the current date is equal to a date in the array it should append it...if not form a new array.and assign it to the value...
+        return activities;
+      }, {} as { [key: string]: IActivity[] })
+    );
     ////return a new object withe a key and the value
     ///var object= {
-     ////key[spetember2019]: [Activity1],
-     ////                     [Activity2]
+    ////key[spetember2019]: [Activity1],
+    /////                   [Activity2]
     /////}
   }
 
@@ -44,6 +48,7 @@ class ActivityStore {
       runInAction("loading activities", () => {
         activities.forEach((activity) => {
           activity.dateTime = new Date(activity.dateTime!);
+          this.activityRegistry.set(activity.id, activity);
         });
         this.loadingInitial = false;
       });
@@ -65,7 +70,7 @@ class ActivityStore {
       try {
         activity = await agent.Activities.details(id);
         runInAction("get Activity", () => {
-          activity.dateTime= new Date(activity.dateTime)
+          activity.dateTime = new Date(activity.dateTime);
           this.selectedActivity = activity;
           this.activityRegistry.set(activity.id, activity);
           this.loadingInitial = false;
@@ -100,7 +105,7 @@ class ActivityStore {
         this.activityRegistry.set(activity.id, activity);
         this.submitting = false;
       });
-      history.push(`/activities/${activity.id}`)
+      history.push(`/activities/${activity.id}`);
     } catch (error) {
       runInAction("Create activities Error", () => {
         this.submitting = false;
@@ -122,7 +127,7 @@ class ActivityStore {
         this.selectedActivity = activity;
         this.submitting = false;
       });
-      history.push(`/activities/${activity.id}`)
+      history.push(`/activities/${activity.id}`);
     } catch (error) {
       runInAction("edit Actitivty error", () => {
         this.submitting = false;

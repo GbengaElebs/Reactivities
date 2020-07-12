@@ -22,6 +22,7 @@ export const DateInput: React.FC<IProps> = ({
         value={input.value || null}
         onChange = {input.onChange}
         onBlur ={input.onBlur}
+        ////event that fires when a user loses focus or does not do something
         onKeyDown = {(e) => e.preventDefault()}
         date={date}
         time={time}
