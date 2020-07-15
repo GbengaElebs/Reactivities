@@ -60,6 +60,7 @@ const LoginForm = () => {
             content="Login"
             fluid
           />
+          {/* if dirtySinceLastSubmit is false */}
           {/* <pre>{JSON.stringify(form.getState(), null, 2)}</pre> */}
         </Form>
       )}

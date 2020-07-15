@@ -3,6 +3,7 @@ using API.Middleware;
 using Application.Activities;
 using Application.Interfaces;
 using Application.Interfaces.Security;
+using AutoMapper;
 using Domain;
 using FluentValidation.AspNetCore;
 using MediatR;
@@ -43,6 +44,7 @@ namespace API
                     });
             services.AddDbContext<DataContext>(opt => 
             {
+                opt.UseLazyLoadingProxies();
                 opt.UseSqlite(Configuration.GetConnectionString
                 ("DefaultConnection"));
             });
@@ -52,11 +54,21 @@ namespace API
                 });
             });
             services.AddMediatR(typeof(List.Handler).Assembly);////add assemblies of type Handler///mediatR should target the List Handler
-
+            services.AddAutoMapper(typeof(List.Handler));
             var builder = services.AddIdentityCore<AppUser>();
             var identityBuilder = new IdentityBuilder(builder.UserType, builder.Services);
             identityBuilder.AddEntityFrameworkStores<DataContext>();
             identityBuilder.AddSignInManager<SignInManager<AppUser>>(); 
+
+            services.AddAuthorization(opt => 
+            {
+                opt.AddPolicy("IsActivityHost", policy => 
+                {
+                    policy.Requirements.Add(new IsHostRequirement());
+                });
+            });
+            services.AddTransient<IAuthorizationHandler, IsHostRequirementHandler>();
+            ///only available for the lifetime of the request
 
             services.AddScoped<IJwtGenerator, JwtGenerator>();
             services.AddScoped<IUserAccessor, UserAccessor>();
