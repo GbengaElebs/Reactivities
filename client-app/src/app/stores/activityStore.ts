@@ -1,26 +1,28 @@
-import { observable, action, computed,  runInAction } from "mobx";
+import { observable, action, computed, runInAction } from "mobx";
 import { SyntheticEvent } from "react";
 import { IActivity } from "../Model/activity";
 import agent from "../api/agent";
 import { history } from "../..";
-import { RootStore } from './rootStore';
-
+import { RootStore } from "./rootStore";
+import { setActivityProps, createAttendee } from "../common/util/util";
+import { toast } from "react-toastify";
 
 export default class ActivityStore {
-   rootStore : RootStore;
-   constructor (rootStore: RootStore) {
-     this.rootStore = rootStore;
-   }
+  rootStore: RootStore;
+  constructor(rootStore: RootStore) {
+    this.rootStore = rootStore;
+  }
 
   @observable activityRegistry = new Map();
   @observable selectedActivity: IActivity | null | undefined = null;
   @observable loadingInitial = false;
   @observable submitting = false;
   @observable target = "";
+  @observable loading = false;
 
   @computed get activitiesByDate() {
     return this.groupActivitiesByDate(
-      Array.from(this.activityRegistry.values())////converts the activity registry to an array
+      Array.from(this.activityRegistry.values()) ////converts the activity registry to an array
     );
   }
 
@@ -52,7 +54,7 @@ export default class ActivityStore {
       const activities = await agent.Activities.list();
       runInAction("loading activities", () => {
         activities.forEach((activity) => {
-          activity.dateTime = new Date(activity.dateTime!);
+          setActivityProps(activity, this.rootStore.userStore.user!);
           this.activityRegistry.set(activity.id, activity);
         });
         this.loadingInitial = false;
@@ -75,7 +77,7 @@ export default class ActivityStore {
       try {
         activity = await agent.Activities.details(id);
         runInAction("get Activity", () => {
-          activity.dateTime = new Date(activity.dateTime);
+          setActivityProps(activity, this.rootStore.userStore.user!);
           this.selectedActivity = activity;
           this.activityRegistry.set(activity.id, activity);
           this.loadingInitial = false;
@@ -106,6 +108,13 @@ export default class ActivityStore {
     this.submitting = true;
     try {
       await agent.Activities.create(activity);
+      const attendee = createAttendee(this.rootStore.userStore.user!);
+      attendee.isHost = true;
+      let attendees = [];
+      attendees.push(attendee);
+      activity.attendees = attendees;
+      ////for this activity the first attendee will be the person that created the activity
+      activity.isHost = true;
       runInAction("Create activities", () => {
         this.activityRegistry.set(activity.id, activity);
         this.submitting = false;
@@ -164,6 +173,56 @@ export default class ActivityStore {
   };
   @action setTarget = (event: SyntheticEvent<HTMLButtonElement>) => {
     this.target = event.currentTarget.name;
+  };
+
+  @action attendActivity = async () => {
+    const attendee = createAttendee(this.rootStore.userStore.user!);
+    this.loading = true;
+    try {
+      await agent.Activities.attend(this.selectedActivity!.id);
+      runInAction(() => {
+        if (this.selectedActivity) {
+          this.selectedActivity.attendees.push(attendee);
+          this.selectedActivity.isGoing = true;
+          this.activityRegistry.set(
+            this.selectedActivity.id,
+            this.selectedActivity
+          );
+          this.loading = false;
+        }
+      });
+    } catch (error) {
+      runInAction(() => {
+        this.loading = false;
+        toast.error("Problem signing up to activity");
+      });
+    }
+  };
+
+  @action cancelAttendance = async () => {
+    this.loading = true;
+    try {
+      await agent.Activities.unattend(this.selectedActivity!.id);
+      runInAction(() => {
+        if (this.selectedActivity) {
+          this.selectedActivity.attendees = this.selectedActivity.attendees.filter(
+            (a) => a.userName !== this.rootStore.userStore.user!.userName
+          );
+          this.selectedActivity.isGoing = false;
+          this.activityRegistry.set(
+          this.selectedActivity.id,
+          this.selectedActivity
+          );
+          this.loading = false;
+
+        }
+      });
+    } catch (error) {
+      runInAction(() => {
+        this.loading = false;
+        toast.error("Problem cancelling activity");
+      });
+    }
   };
 }
 
