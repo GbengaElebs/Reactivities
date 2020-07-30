@@ -4,7 +4,7 @@ import { IActivity } from "../../../app/Model/activity";
 import { observer } from "mobx-react-lite";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
-import { RootStoreContext } from '../../../app/stores/rootStore';
+import { RootStoreContext } from "../../../app/stores/rootStore";
 
 const activityImageStyle = {
   filter: "brightness(30%)",
@@ -23,7 +23,8 @@ const ActivityDetailedHeader: React.FC<{ activity: IActivity }> = ({
   activity,
 }) => {
   const rootStore = useContext(RootStoreContext);
-  const {attendActivity, cancelAttendance, loading}= rootStore.activityStore;
+  const { attendActivity, cancelAttendance, loading } = rootStore.activityStore;
+  const host = activity.attendees.filter((x) => x.isHost)[0];
   return (
     <Segment.Group>
       <Segment basic attached="top" style={{ padding: "0" }}>
@@ -43,7 +44,10 @@ const ActivityDetailedHeader: React.FC<{ activity: IActivity }> = ({
                 />
                 <p>{format(activity.dateTime!, "eeee do MMMM")}</p>
                 <p>
-                  Hosted by <strong>Bob</strong>
+                  Hosted by{" "}
+                  <Link to={`/profile/${host.userName}`}>
+                    <strong>{host.displayName}</strong>
+                  </Link>
                 </p>
               </Item.Content>
             </Item>
@@ -61,9 +65,13 @@ const ActivityDetailedHeader: React.FC<{ activity: IActivity }> = ({
             Manage Event
           </Button>
         ) : activity.isGoing ? (
-          <Button loading= {loading} onClick={cancelAttendance}>Cancel attendance</Button>
+          <Button loading={loading} onClick={cancelAttendance}>
+            Cancel attendance
+          </Button>
         ) : (
-          <Button loading= {loading} onClick={attendActivity} color="teal">Join Activity</Button>
+          <Button loading={loading} onClick={attendActivity} color="teal">
+            Join Activity
+          </Button>
         )}
       </Segment>
     </Segment.Group>
