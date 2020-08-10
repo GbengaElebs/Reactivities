@@ -12,5 +12,12 @@ namespace API.Controllers
         {
             return await Mediator.Send(new Details.Query{Username = username.ToLower()});
         }
+
+        [HttpPut]
+        public async Task<ActionResult<Unit>> Edit(Edit.Command command)
+        {
+            ///Create.Command because of the api controller attribut it helps us to map the correct header 
+            return await Mediator.Send(new Edit.Command{displayName = command.displayName, bio = command.bio});
+        }
     }
 }

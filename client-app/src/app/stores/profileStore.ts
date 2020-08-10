@@ -14,6 +14,7 @@ export default class ProfileStore {
   @observable profile: IProfile | null = null;
   @observable loadingProfile = true;
   @observable uploadingPhoto = false;
+  @observable isUpdating = false;
   @observable loading = false;
   @computed get isCurrentUser() {
     if (this.rootStore.userStore.user && this.profile) {
@@ -47,7 +48,7 @@ export default class ProfileStore {
       const photo = await agent.Profiles.uploadPhoto(file);
       runInAction(() => {
         if (this.profile) {
-          this.profile.photos.push(photo);
+          this.profile.photos?.push(photo);
           if (photo.isMain && this.rootStore.userStore.user) {
             this.rootStore.userStore.user.image = photo.url;
             this.profile.image = photo.url;
@@ -68,14 +69,14 @@ export default class ProfileStore {
     this.loading = true;
     try {
       await agent.Profiles.setMain(id);
-      const photoUrl = this.profile?.photos.filter((x) => x.id === id)[0];
+      const photoUrl = this.profile?.photos?.filter((x) => x.id === id)[0];
 
       runInAction(() => {
         if (this.profile) {
           if (photoUrl && this.rootStore.userStore.user) {
             this.rootStore.userStore.user.image = photoUrl.url;
-            this.profile!.photos.find((x) => x.isMain)!.isMain = false;
-            this.profile!.photos.find((p) => p.id === id)!.isMain = true;
+            this.profile!.photos!.find((x) => x.isMain)!.isMain = false;
+            this.profile!.photos!.find((p) => p.id === id)!.isMain = true;
             this.profile!.image = photoUrl.url;
           }
         }
@@ -91,19 +92,44 @@ export default class ProfileStore {
   };
 
   @action deletePhoto = async (photo: IPhoto | undefined) => {
-      this.loading = true;
-      try {
-          await agent.Profiles.deletePhoto(photo!.id)
-          runInAction(() => {
-              if(this.profile)
-              this.profile!.photos = this.profile?.photos.filter(a => a.id !== photo!.id);
-              this.loading = false;
-          })
-      } catch (error) {
-          toast.error('Problem deleting the photo')
-          runInAction(() => {
-              this.loading = false;
-          })
-      }
-  }
+    this.loading = true;
+    try {
+      await agent.Profiles.deletePhoto(photo!.id);
+      runInAction(() => {
+        if (this.profile)
+          this.profile!.photos = this.profile?.photos?.filter(
+            (a) => a.id !== photo!.id
+          );
+        this.loading = false;
+      });
+    } catch (error) {
+      toast.error("Problem deleting the photo");
+      runInAction(() => {
+        this.loading = false;
+      });
+    }
+  };
+
+  @action editProfile = async (profile: IProfile) => {
+    this.isUpdating = true;
+    try {
+      await agent.Profiles.edit(profile!);
+      runInAction(() => {
+        if (this.profile) {
+          if (this.rootStore.userStore.user) {
+            this.profile.bio = profile.bio;
+            this.profile.displayName = profile.displayName;
+            this.rootStore.userStore.user.displayName = profile.displayName;
+          }
+        }
+        this.isUpdating = false;
+      });
+    } catch (error) {
+      console.log(error);
+      toast.error("Problem Editing User Profile");
+      runInAction(() => {
+        this.isUpdating = false;
+      });
+    }
+  };
 }

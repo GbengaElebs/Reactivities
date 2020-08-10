@@ -73,11 +73,15 @@ const User = {
 
 const Profiles = {
     get: (username: string):Promise<IProfile> =>requests.get(`/profile/${username}`),
+    edit: (profile: IProfile) =>requests.put(`/profile/`,profile),
     uploadPhoto: (photo: Blob):Promise<IPhoto> => requests.postForm('/photos',photo),
     setMain: (id: string)  => requests.post(`/photos/${id}/setmain`,{}),
     deletePhoto: (id: string) => requests.delete(`/photos/${id}`)
 
 }
+
+
+
 
 export default {
     Activities,
