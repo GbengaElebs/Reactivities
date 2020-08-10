@@ -1,5 +1,7 @@
 using System.Text;
+using System.Threading.Tasks;
 using API.Middleware;
+using API.SignalR;
 using Application.Activities;
 using Application.Interfaces;
 using Application.Interfaces.Security;
@@ -37,34 +39,39 @@ namespace API
         public void ConfigureServices(IServiceCollection services)
         {
 
-            services.AddControllers(opt => {
+            services.AddControllers(opt =>
+            {
                 var policy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
                 opt.Filters.Add(new AuthorizeFilter(policy));
             })//dependency injection container services we need to add in our application that we want available everywhere
-                    .AddFluentValidation(cfg => {
+                    .AddFluentValidation(cfg =>
+                    {
                         cfg.RegisterValidatorsFromAssemblyContaining<Create>();
                     });
-            services.AddDbContext<DataContext>(opt => 
+            services.AddDbContext<DataContext>(opt =>
             {
                 opt.UseLazyLoadingProxies();
                 opt.UseSqlite(Configuration.GetConnectionString
                 ("DefaultConnection"));
             });
-            services.AddCors(opt => {
-                opt.AddPolicy("CorsPolicy",policy => {
-                    policy.AllowAnyHeader().AllowAnyMethod().WithOrigins("http://localhost:3000");
+            services.AddCors(opt =>
+            {
+                opt.AddPolicy("CorsPolicy", policy =>
+                {
+                    policy.AllowAnyHeader().AllowAnyMethod().WithOrigins("http://localhost:3000").AllowCredentials();
                 });
             });
             services.AddMediatR(typeof(List.Handler).Assembly);////add assemblies of type Handler///mediatR should target the List Handler
             services.AddAutoMapper(typeof(List.Handler));
+            services.AddSignalR();
             var builder = services.AddIdentityCore<AppUser>();
             var identityBuilder = new IdentityBuilder(builder.UserType, builder.Services);
             identityBuilder.AddEntityFrameworkStores<DataContext>();
-            identityBuilder.AddSignInManager<SignInManager<AppUser>>(); 
+            identityBuilder.AddSignInManager<SignInManager<AppUser>>();
 
-            services.AddAuthorization(opt => 
+            services.AddAuthorization(opt =>
             {
-                opt.AddPolicy("IsActivityHost", policy => 
+                opt.AddPolicy("IsActivityHost", policy =>
                 {
                     policy.Requirements.Add(new IsHostRequirement());
                 });
@@ -80,7 +87,8 @@ namespace API
             ////to enable the method to be injected across classes
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["TokenKey"]));
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                    .AddJwtBearer(opt => {
+                    .AddJwtBearer(opt =>
+                    {
                         opt.TokenValidationParameters = new TokenValidationParameters
                         {
                             ValidateIssuerSigningKey = true,
@@ -88,8 +96,25 @@ namespace API
                             ValidateAudience = false,
                             ValidateIssuer = false
                         };
-                    });  
-             
+
+                        opt.Events = new JwtBearerEvents
+                        {
+                            OnMessageReceived = context =>
+                            {
+                                var accessToken = context.Request.Query["access_token"];
+                                var path = context.HttpContext.Request.Path;
+
+                                if (!string.IsNullOrEmpty(accessToken) && (path.StartsWithSegments("/chat")))
+                                {
+                                    context.Token = accessToken;
+                                }
+                                return Task.CompletedTask;
+
+
+                            }
+                        };
+                    });
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -103,12 +128,12 @@ namespace API
             }
             ////Middleware is software that's assembled into an app pipeline to handle requests and responses. Each component:
 
-// Chooses whether to pass the request to the next component in the pipeline.
-// Can perform work before and after the next component in the pipeline.
+            // Chooses whether to pass the request to the next component in the pipeline.
+            // Can perform work before and after the next component in the pipeline.
             ///middle ware that we add to the pipeline
 
             //app.UseHttpsRedirection();////use selfsigned request routes request to https
-             
+
             app.UseRouting();////middleware to tell application to use routing
 
             app.UseAuthentication();
@@ -119,6 +144,7 @@ namespace API
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();///controller endpoints so the api knows what to do when a request comes into the api and how to routes it
+                endpoints.MapHub<ChatHub>("/chat");
             });
 
         }

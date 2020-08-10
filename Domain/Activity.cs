@@ -14,6 +14,8 @@ namespace Domain
         public string Venue { get; set; }
        public virtual ICollection<UserActivities> UserActivities { get; set; }
        //one activity has many users
+       public virtual ICollection<Comment> Comments { get; set; }
+       //one activity has many Comments
 
     }
 }

@@ -6,6 +6,11 @@ import { history } from "../..";
 import { RootStore } from "./rootStore";
 import { setActivityProps, createAttendee } from "../common/util/util";
 import { toast } from "react-toastify";
+import {
+  HubConnection,
+  HubConnectionBuilder,
+  LogLevel,
+} from "@microsoft/signalr";
 
 export default class ActivityStore {
   rootStore: RootStore;
@@ -19,6 +24,54 @@ export default class ActivityStore {
   @observable submitting = false;
   @observable target = "";
   @observable loading = false;
+  @observable.ref hubConnection: HubConnection | null = null;
+
+  @action createHubConnection = (activityId: string) => {
+    this.hubConnection = new HubConnectionBuilder()
+      .withUrl("http://localhost:5000/chat", {
+        accessTokenFactory: () => this.rootStore.commonStore.token!,
+      })
+      .configureLogging(LogLevel.Information)
+      .build();
+
+    this.hubConnection
+      .start()
+      .then(() => console.log(this.hubConnection!.state))
+      .then(() => {
+        console.log("Attempting to join the party");
+        if (this.hubConnection!.state === "Connected")
+          this.hubConnection?.invoke("AddToGroup", activityId);
+      })
+      .catch((error) => console.log("Error establishing connection", error));
+
+    this.hubConnection.on("ReceiveComment", (comment) => {
+      runInAction(() => {
+        this.selectedActivity!.comments.push(comment);
+      });
+    });
+
+    this.hubConnection.on("Send", (message) => {
+      toast.info(message);
+    });
+  };
+
+  @action stopHubConnection = () => {
+    this.hubConnection!.invoke("RemoveFromGroup", this.selectedActivity!.id)
+      .then(() => {
+        this.hubConnection!.stop();
+      })
+      .then(() => console.log("Connection stopped"))
+      .catch((err) => console.log(err));
+  };
+
+  @action addComment = async (values: any) => {
+    values.activityId = this.selectedActivity?.id;
+    try {
+      await this.hubConnection!.invoke("SendComment", values);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   @computed get activitiesByDate() {
     return this.groupActivitiesByDate(
@@ -113,6 +166,7 @@ export default class ActivityStore {
       let attendees = [];
       attendees.push(attendee);
       activity.attendees = attendees;
+      activity.comments = [];
       ////for this activity the first attendee will be the person that created the activity
       activity.isHost = true;
       runInAction("Create activities", () => {
@@ -210,11 +264,10 @@ export default class ActivityStore {
           );
           this.selectedActivity.isGoing = false;
           this.activityRegistry.set(
-          this.selectedActivity.id,
-          this.selectedActivity
+            this.selectedActivity.id,
+            this.selectedActivity
           );
           this.loading = false;
-
         }
       });
     } catch (error) {

@@ -10,6 +10,16 @@ export interface IActivity {
     isGoing : boolean;
     isHost : boolean;
     attendees : IAttendee[];
+    comments:IComment[];
+}
+
+export interface IComment {
+    id: string;
+    createdAt : Date;
+    body : string;
+    userName: string;
+    displayName: string;
+    image: string
 }
 
 export interface IActivityFormValues extends Partial<IActivity>{
@@ -25,6 +35,7 @@ export class ActivityFormValues implements IActivityFormValues {
     time?:Date = undefined;
     city: string =  "";
     venue:string = "";
+    
 
     constructor(init?: IActivityFormValues) {
         if (init && init.dateTime) {
