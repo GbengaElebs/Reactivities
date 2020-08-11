@@ -16,6 +16,7 @@ namespace Persistence
         public DbSet<UserActivities> UserActivities { get; set; }
         public DbSet<Photo> Photos { get; set; }
         public DbSet<Comment> Comments { get; set; }
+        public DbSet<UserFollowing> Followings {get; set;}
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -43,7 +44,24 @@ namespace Persistence
                      .HasForeignKey(a => a.ActivityId);
             ///one activity can be attended my many users
             ////activityid is a key used to check if activities exist on activity table what it uses to check
-                     
+             builder.Entity<UserFollowing>(b => 
+             {
+                 b.HasKey(k => new {k.ObserverId, k.TargetId});
+
+                 b.HasOne(o => o.Observer)
+                    .WithMany(f => f.Followings)
+                    .HasForeignKey(o => o.ObserverId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+
+                //one observer can have many people he is following
+
+                b.HasOne(o => o.Target)
+                    .WithMany(f => f.Followers)
+                    .HasForeignKey(t => t.TargetId)
+                    .OnDelete(DeleteBehavior.Restrict);
+                //one target can have many folllowers
+             });   
         }
     }
 }
