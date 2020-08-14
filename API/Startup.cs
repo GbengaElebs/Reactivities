@@ -78,7 +78,7 @@ namespace API
                 });
             });
             services.AddTransient<IAuthorizationHandler, IsHostRequirementHandler>();
-            ///only available for the lifetime of the request
+            ///new instance on every call only available for the lifetime of the request
 
             services.AddScoped<IJwtGenerator, JwtGenerator>();
             services.AddScoped<IUserAccessor, UserAccessor>();
