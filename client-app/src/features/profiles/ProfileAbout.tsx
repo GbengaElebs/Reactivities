@@ -20,7 +20,7 @@ const ProfileAbout: React.FC = () => {
     editProfile,
     isUpdating,
   } = rootStore.profileStore;
-  const [editProfileMode, setNewProfile] = useState(true);
+  const [editProfileMode, setNewProfile] = useState(false);
   const [userprofile, setProfile] = useState(new EditProfileValues());
 
 
@@ -58,7 +58,7 @@ const ProfileAbout: React.FC = () => {
           )}
         </Grid.Column>
         <Grid.Column width={16}>
-          {editProfileMode ? (
+          {isCurrentUser && editProfileMode ? (
             <Segment clearing>
               <FinalForm
                 validate={validate}

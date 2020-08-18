@@ -9,6 +9,7 @@ import { LoadingComponent } from "../../app/layout/LoadingComponent";
 
 interface RouteParams {
   username: string;
+  
 }
 
 interface IProps extends RouteComponentProps<RouteParams> {}

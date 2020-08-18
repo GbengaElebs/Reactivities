@@ -4,6 +4,7 @@ import { RootStoreContext } from "../../app/stores/rootStore";
 import PhotoUploadWidget from "../../app/common/photoUpload/PhotoUploadWidget";
 import { observer } from "mobx-react-lite";
 
+
 const ProfilePhotos = () => {
   const rootStore = useContext(RootStoreContext);
   const {
@@ -15,7 +16,7 @@ const ProfilePhotos = () => {
     loading,
     deletePhoto
   } = rootStore.profileStore;
-  const [addPhotoMode, setAddPhotoMode] = useState(true);
+  const [addPhotoMode, setAddPhotoMode] = useState(false);
   const [target, setTarget] = useState<string | undefined>(undefined);
   const [deleteTarget, setdeleteTarget] = useState<string | undefined>(undefined);
 
@@ -39,7 +40,7 @@ const ProfilePhotos = () => {
           )}
         </Grid.Column>
         <Grid.Column width={16}>
-          {addPhotoMode ? (
+          {isCurrentUser && addPhotoMode ? (
             <PhotoUploadWidget
               uploadPhoto={handleUploadImage}
               loading={uploadingPhoto}
@@ -50,7 +51,7 @@ const ProfilePhotos = () => {
                 profile.photos.map((photo) => (
                   <Card key={photo.id}>
                     <Image src={photo.url} />
-                    {isCurrentUser && (
+                    {isCurrentUser &&  (
                       <Button.Group fluid widths={2}>
                         <Button
                           name={photo.id}

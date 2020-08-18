@@ -2,13 +2,14 @@ import React, { useContext, Fragment } from "react";
 import { Container, Segment, Header, Button, Image } from "semantic-ui-react";
 import { Link } from "react-router-dom";
 import { RootStoreContext } from "../../app/stores/rootStore";
-import LoginForm from '../user/LoginForm';
-import RegisterForm from '../user/RegisterForm';
+import LoginForm from "../user/LoginForm";
+import RegisterForm from "../user/RegisterForm";
 
 const HomePage = () => {
+  const token = window.localStorage.getItem('jwt');
   const rootStore = useContext(RootStoreContext);
   const { isLoggedin, user } = rootStore.userStore;
-  const {openModal} = rootStore.modalSrore;
+  const { openModal } = rootStore.modalSrore;
   return (
     <Segment inverted textAlign="center" vertical className="masthead">
       <Container text>
@@ -20,7 +21,7 @@ const HomePage = () => {
             style={{ marginBottom: 12 }}
           />
           Reactivities
-          {isLoggedin && user ? (
+          {isLoggedin && user && token? (
             <Fragment>
               <Header
                 as="h2"
@@ -34,10 +35,18 @@ const HomePage = () => {
           ) : (
             <Fragment>
               <Header as="h2" inverted content="Welcome to Reactivities" />
-              <Button onClick={() => openModal(<LoginForm/>)} size="huge" inverted>
+              <Button
+                onClick={() => openModal(<LoginForm />)}
+                size="huge"
+                inverted
+              >
                 Login
               </Button>
-              <Button onClick={() => openModal(<RegisterForm/>)}  size="huge" inverted>
+              <Button
+                onClick={() => openModal(<RegisterForm />)}
+                size="huge"
+                inverted
+              >
                 Register
               </Button>
             </Fragment>

@@ -27,6 +27,8 @@ const PhotoWidgetDropZone: React.FC<IProps> = ({ setFiles }) => {
           preview: URL.createObjectURL(file),
         })
       )
+      ///use call back returns a cached version of the function and then when it changes return the cached version
+      ///only perform this function if setFiles has changed
     );
     // Do something with the files
   }, [setFiles]);

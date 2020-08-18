@@ -6,9 +6,14 @@ import ProfileFollowings from "./ProfileFollowings";
 import { observer } from "mobx-react-lite";
 import ProfileActivities from './ProfileActivities';
 
+
+interface IProps {
+  setActiveTab: (activeTab: any) => void;
+}
+
 const panes = [
   { menuItem: "About", render: () => <ProfileAbout /> },
-  { menuItem: "Photos", render: () => <ProfilePhotos /> },
+  { menuItem: "Photos", render: () => <ProfilePhotos/> },
   {
     menuItem: "Activities",
     render: () => <ProfileActivities/>,
@@ -17,11 +22,9 @@ const panes = [
   { menuItem: "Following", render: () => <ProfileFollowings /> },
 ];
 
-interface IProps {
-  setActiveTab: (activeTab: any) => void;
-}
 
 const ProfileContent: React.FC<IProps> = ({setActiveTab}) => {
+
   return (
     <Tab
       menu={{ fluid: true, vertical: true, color: "teal" }}

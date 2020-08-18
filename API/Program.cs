@@ -28,9 +28,9 @@ namespace API
                 }
                 catch (Exception ex)
                 {
-                    
-                   var logger = services.GetRequiredService<ILogger<Program>>();///log out Program file
-                   logger.LogError(ex, "An Error occured during migration");
+
+                    var logger = services.GetRequiredService<ILogger<Program>>();///log out Program file
+                    logger.LogError(ex, "An Error occured during migration");
                 }
             }
             host.Run();
