@@ -6,12 +6,13 @@ using API.SignalR;
 using Application.Activities;
 using Application.Interfaces;
 using Application.Interfaces.Security;
-using Application.Photos;
 using Application.Profiles;
 using AutoMapper;
 using Domain;
 using FluentValidation.AspNetCore;
+using Infrastructure.Email;
 using Infrastructure.Photos;
+using Interfaces.Security;
 using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -61,7 +62,7 @@ namespace API
 
             ConfigureServices(services);
         }
-        
+
         public void ConfigureServices(IServiceCollection services)
         {
 
@@ -74,7 +75,7 @@ namespace API
                     {
                         cfg.RegisterValidatorsFromAssemblyContaining<Create>();
                     });
-            
+
             services.AddCors(opt =>
             {
                 opt.AddPolicy("CorsPolicy", policy =>
@@ -90,11 +91,13 @@ namespace API
             services.AddMediatR(typeof(List.Handler).Assembly);////add assemblies of type Handler///mediatR should target the List Handler
             services.AddAutoMapper(typeof(List.Handler));
             services.AddSignalR();
-            var builder = services.AddIdentityCore<AppUser>();
+            var builder = services.AddIdentityCore<AppUser>(options => {
+                options.SignIn.RequireConfirmedEmail = true;
+            });
             var identityBuilder = new IdentityBuilder(builder.UserType, builder.Services);
             identityBuilder.AddEntityFrameworkStores<DataContext>();
             identityBuilder.AddSignInManager<SignInManager<AppUser>>();
-
+            identityBuilder.AddDefaultTokenProviders();
             services.AddAuthorization(opt =>
             {
                 opt.AddPolicy("IsActivityHost", policy =>
@@ -109,7 +112,11 @@ namespace API
             services.AddScoped<IUserAccessor, UserAccessor>();
             services.AddScoped<IPhotoAccessor, PhotoAccessor>();
             services.AddScoped<IProfileReader, ProfileReader>();
+            services.AddScoped<IFaceBookAcessor, FaceBookAccessor>();
+            services.AddScoped<IEmailSender, EmailSender>();
             services.Configure<CloudinarySettings>(Configuration.GetSection("Cloudinary"));
+            services.Configure<FaceBookAppSettings>(Configuration.GetSection("Authentication:Facebook"));
+            services.Configure<SendGridSettings>(Configuration.GetSection("SendGrid"));
             ///stroonglt type cloudinary to configuration...to enable it to be injected in IConfiguration
             ////to enable the method to be injected across classes
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["TokenKey"]));
@@ -162,6 +169,21 @@ namespace API
             ///middle ware that we add to the pipeline
 
             //app.UseHttpsRedirection();////use selfsigned request routes request to https
+            app.UseXContentTypeOptions();
+            app.UseReferrerPolicy(opt => opt.NoReferrer());
+            app.UseXXssProtection(opt => opt.EnabledWithBlockMode());
+            app.UseXfo(opt => opt.Deny());
+            app.UseCsp(opt => opt
+                            .BlockAllMixedContent()
+                            .StyleSources(s => s.Self().CustomSources("https://fonts.googleapis.com"))
+                            .FontSources(s => s.Self().CustomSources("https://fonts.gstatic.com",
+                            "data:"))
+                            .FormActions(s => s.Self())
+                            .FrameAncestors(s => s.Self())
+                            .ImageSources(s => s.Self().CustomSources("https://res.cloudinary.com", "blob:", "data:"))
+                            .ScriptSources(s => s.Self().CustomSources("sha256-ma5XxS1EBgt17N22Qq31rOxxRWRfzUTQS1KOtfYwuNo="))
+                            );
+
             app.UseDefaultFiles();
             app.UseStaticFiles();
 

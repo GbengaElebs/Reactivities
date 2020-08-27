@@ -8,7 +8,9 @@ import { Router } from "react-router-dom";
 import { createBrowserHistory } from "history";
 import ScrollToTop from './app/layout/ScollToTop';
 import 'react-widgets/dist/css/react-widgets.css';
+import 'semantic-ui-css/semantic.min.css';
 import dateFnsLocalizer from 'react-widgets-date-fns';
+import 'mobx-react-lite/batchingForReactDom';
 
 dateFnsLocalizer();
 

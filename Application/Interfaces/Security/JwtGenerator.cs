@@ -6,7 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System;
 using Microsoft.Extensions.Configuration;
-using System.Linq;
+using System.Security.Cryptography;
 
 namespace Application.Interfaces.Security
 {
@@ -31,7 +31,7 @@ namespace Application.Interfaces.Security
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.Now.AddDays(7),
+                Expires = DateTime.Now.AddMinutes(2),
                 SigningCredentials = creds
             };
 
@@ -44,8 +44,15 @@ namespace Application.Interfaces.Security
 
         }
 
-       
-
+        public RefreshToken GenerateRefreshToken()
+        {
+            var randomNumber = new byte[32];
+            using var rng = RandomNumberGenerator.Create();
+            rng.GetBytes(randomNumber);
+            return new RefreshToken{
+                Token = Convert.ToBase64String(randomNumber)
+            };
+        }
     }
 }
 

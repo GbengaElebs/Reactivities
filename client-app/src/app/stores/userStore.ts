@@ -2,15 +2,17 @@ import { observable, computed, action, runInAction } from "mobx";
 import { IUser, IUserFormValues } from "../Model/user";
 import agent from "../api/agent";
 import { RootStore } from "./rootStore";
-import { history } from '../..';
+import { history } from "../..";
 
 export default class UserStore {
+  refreshTokenTimeout: any;
   rootStore: RootStore;
   constructor(rootStore: RootStore) {
     this.rootStore = rootStore;
   }
 
   @observable user: IUser | null = null;
+  @observable loading = false;
   @computed get isLoggedin() {
     return !!this.user;
   }
@@ -22,32 +24,59 @@ export default class UserStore {
         this.user = user;
       });
       this.rootStore.commonStore.setToken(user.token);
+      this.startRefreshTokenTimer(user);
       this.rootStore.modalSrore.closeModal();
-      history.push('/activities')
+      history.push("/activities");
     } catch (error) {
-      throw(error);
+      throw error;
     }
   };
-
 
   @action register = async (values: IUserFormValues) => {
     try {
-      const user = await agent.User.register(values);
-      runInAction(() => {
-        this.user = user;
-      });
-      this.rootStore.commonStore.setToken(user.token);
+      await agent.User.register(values);
       this.rootStore.modalSrore.closeModal();
-      history.push('/activities')
+      history.push(`/user/registerSuccess?email=${values.email}`);
     } catch (error) {
-      throw(error);
+      throw error;
     }
   };
 
-  @action logout =() => {
+  @action logout = () => {
     this.rootStore.commonStore.setToken(null);
     this.user = null;
-    history.push('/')
+    history.push("/");
+  };
+
+  @action fbLogin = async (response: any) => {
+    this.loading = true;
+    try {
+      const user = await agent.User.fbLogin(response.accessToken);
+      runInAction(() => {
+        this.user = user;
+        this.rootStore.commonStore.setToken(user.token);
+        this.startRefreshTokenTimer(user);
+        this.rootStore.modalSrore.closeModal();
+        this.loading = false;
+      });
+      history.push("/activities");
+      console.log(user);
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  @action refreshToken = async () => {
+    this.stopRefreshTokenTimer();
+    try {
+      const user = await agent.User.refreshToken();
+      runInAction(() => {
+        this.user = user
+      })
+      this.rootStore.commonStore.setToken(user.token);
+      this.startRefreshTokenTimer(user);
+    } catch (error) {
+    }
   }
 
   @action getUser = async () => {
@@ -55,9 +84,22 @@ export default class UserStore {
       const user = await agent.User.current();
       runInAction(() => {
         this.user = user;
-      })
+        this.rootStore.commonStore.setToken(user.token);
+      this.startRefreshTokenTimer(user);
+      });
     } catch (error) {
       console.log(error);
     }
+  };
+
+  private startRefreshTokenTimer(user: IUser) {
+    const jwtToken = JSON.parse(atob(user.token.split('.')[1]));
+    const expires = new Date(jwtToken.exp * 1000);
+    const timeout = expires.getTime() - Date.now() - (60 * 1000);
+    this.refreshTokenTimeout = setTimeout(this.refreshToken, timeout);
+  }
+
+  private stopRefreshTokenTimer() {
+    clearTimeout(this.refreshTokenTimeout);
   }
 }

@@ -9,8 +9,8 @@ using Persistence;
 namespace Persistence.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20200817213435_ProductionMigration")]
-    partial class ProductionMigration
+    [Migration("20200826225252_RefreshTokenn")]
+    partial class RefreshTokenn
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -164,6 +164,31 @@ namespace Persistence.Migrations
                     b.HasIndex("AppUserId");
 
                     b.ToTable("Photos");
+                });
+
+            modelBuilder.Entity("Domain.RefreshToken", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<string>("AppUserId")
+                        .HasColumnType("varchar(255) CHARACTER SET utf8mb4");
+
+                    b.Property<DateTime>("Expires")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("Revoked")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Token")
+                        .HasColumnType("longtext CHARACTER SET utf8mb4");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AppUserId");
+
+                    b.ToTable("RefreshToken");
                 });
 
             modelBuilder.Entity("Domain.UserActivities", b =>
@@ -376,6 +401,13 @@ namespace Persistence.Migrations
                 {
                     b.HasOne("Domain.AppUser", null)
                         .WithMany("Photos")
+                        .HasForeignKey("AppUserId");
+                });
+
+            modelBuilder.Entity("Domain.RefreshToken", b =>
+                {
+                    b.HasOne("Domain.AppUser", "AppUser")
+                        .WithMany("RefreshToken")
                         .HasForeignKey("AppUserId");
                 });
 

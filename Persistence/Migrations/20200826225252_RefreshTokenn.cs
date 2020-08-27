@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace Persistence.Migrations
 {
-    public partial class ProductionMigration : Migration
+    public partial class RefreshTokenn : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -257,6 +257,28 @@ namespace Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "RefreshToken",
+                columns: table => new
+                {
+                    Id = table.Column<int>(nullable: false)
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
+                    AppUserId = table.Column<string>(nullable: true),
+                    Token = table.Column<string>(nullable: true),
+                    Expires = table.Column<DateTime>(nullable: false),
+                    Revoked = table.Column<DateTime>(nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_RefreshToken", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_RefreshToken_AspNetUsers_AppUserId",
+                        column: x => x.AppUserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "UserActivities",
                 columns: table => new
                 {
@@ -355,6 +377,11 @@ namespace Persistence.Migrations
                 column: "AppUserId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_RefreshToken_AppUserId",
+                table: "RefreshToken",
+                column: "AppUserId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_UserActivities_ActivityId",
                 table: "UserActivities",
                 column: "ActivityId");
@@ -385,6 +412,9 @@ namespace Persistence.Migrations
 
             migrationBuilder.DropTable(
                 name: "Photos");
+
+            migrationBuilder.DropTable(
+                name: "RefreshToken");
 
             migrationBuilder.DropTable(
                 name: "UserActivities");

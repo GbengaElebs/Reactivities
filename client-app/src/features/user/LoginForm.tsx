@@ -1,12 +1,14 @@
 import React, { useContext } from "react";
 import { Form as FinalForm, Field } from "react-final-form";
-import { Form, Button, Header } from "semantic-ui-react";
+import { Form, Button, Header, Divider } from "semantic-ui-react";
 import { TextInput } from "../../app/common/form/TextInput";
 import { RootStoreContext } from "../../app/stores/rootStore";
 import { IUserFormValues } from "../../app/Model/user";
 import { FORM_ERROR } from "final-form";
 import { combineValidators, isRequired } from "revalidate";
 import ErrorMessage from "../../app/common/form/ErrorMessage";
+import SocialLogin from './SocialLogin';
+import { observer } from 'mobx-react-lite';
 
 const validate = combineValidators({
   email: isRequired("email"),
@@ -15,7 +17,7 @@ const validate = combineValidators({
 
 const LoginForm = () => {
   const rootStore = useContext(RootStoreContext);
-  const { login } = rootStore.userStore;
+  const { login, fbLogin,loading } = rootStore.userStore;
   return (
     <FinalForm
       onSubmit={(values: IUserFormValues) =>
@@ -41,10 +43,10 @@ const LoginForm = () => {
           />
           <Field name="email" component={TextInput} placeholder="Email" />
           <Field
-            name="password"
+            name='password'
             component={TextInput}
-            placeholder="password"
-            type="password"
+            placeholder='Password'
+            type='password'
           />
           {submitError && !dirtySinceLastSubmit && (
             <ErrorMessage
@@ -60,6 +62,8 @@ const LoginForm = () => {
             content="Login"
             fluid
           />
+          <Divider>Or</Divider>
+          <SocialLogin fbCallback={fbLogin} loading={loading}/>
           {/* if dirtySinceLastSubmit is false */}
           {/* <pre>{JSON.stringify(form.getState(), null, 2)}</pre> */}
         </Form>
@@ -68,4 +72,4 @@ const LoginForm = () => {
   );
 };
 
-export default LoginForm;
+export default observer(LoginForm);

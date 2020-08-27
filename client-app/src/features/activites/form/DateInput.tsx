@@ -6,6 +6,7 @@ import {DateTimePicker} from 'react-widgets';
 interface IProps extends FieldRenderProps<Date, HTMLElement>, FormFieldProps {id?: string | undefined}
 
 export const DateInput: React.FC<IProps> = ({
+  id= null,
   input,
   width,
   type,

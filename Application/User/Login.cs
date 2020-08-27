@@ -44,30 +44,29 @@ namespace Application.User
                 _userManager = userManager;
             }
 
-        public async Task<User> Handle(Query request, CancellationToken cancellationToken)
-        {
-            var user = await _userManager.FindByEmailAsync(request.Email);
-            if (user == null)
+            public async Task<User> Handle(Query request, CancellationToken cancellationToken)
             {
-                throw new RestException(HttpStatusCode.Unauthorized);
-            }
-            var result = await _signInManager.CheckPasswordSignInAsync(user,
-            request.Password, false);
-
-            if (result.Succeeded)
-            {
-                return new User
+                var user = await _userManager.FindByEmailAsync(request.Email);
+                if (user == null)
                 {
-                    DisplayName = user.DisplayName,
-                    Token = _jwtGenerator.CreateToken(user),
-                    UserName = user.UserName,
-                    Image = user.Photos.FirstOrDefault(x => x.IsMain)?.Url
-                };
+                    throw new RestException(HttpStatusCode.Unauthorized);
+                }
+
+                if (!user.EmailConfirmed) throw new RestException(HttpStatusCode.Unauthorized, new {Email = "Email Not Confirmed"});
+                var result = await _signInManager.CheckPasswordSignInAsync(user,
+                request.Password, false);
+
+                if (result.Succeeded)
+                {
+                    var refreshToken = _jwtGenerator.GenerateRefreshToken();
+                    user.RefreshToken.Add(refreshToken);
+                    await _userManager.UpdateAsync(user);
+                    return new User(user, _jwtGenerator, refreshToken.Token);
+                }
+
+                throw new RestException(HttpStatusCode.Unauthorized);
+
             }
-
-            throw new RestException(HttpStatusCode.Unauthorized);
-
         }
     }
-}
 }

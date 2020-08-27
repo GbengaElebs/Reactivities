@@ -9,7 +9,7 @@ export default class ProfileStore {
 
   constructor(rootStore: RootStore) {
     this.rootStore = rootStore;
-
+////A variation on autorun that gives more fine grained control on which observables will be tracked. It takes two functions, the first one (the data function) is tracked and returns data that is used as input for the second one, the effect function. 
     reaction(
       () => this.activeTab,
       (activeTab) => {

@@ -164,6 +164,31 @@ namespace Persistence.Migrations
                     b.ToTable("Photos");
                 });
 
+            modelBuilder.Entity("Domain.RefreshToken", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<string>("AppUserId")
+                        .HasColumnType("varchar(255) CHARACTER SET utf8mb4");
+
+                    b.Property<DateTime>("Expires")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("Revoked")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Token")
+                        .HasColumnType("longtext CHARACTER SET utf8mb4");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AppUserId");
+
+                    b.ToTable("RefreshToken");
+                });
+
             modelBuilder.Entity("Domain.UserActivities", b =>
                 {
                     b.Property<string>("AppUserId")
@@ -374,6 +399,13 @@ namespace Persistence.Migrations
                 {
                     b.HasOne("Domain.AppUser", null)
                         .WithMany("Photos")
+                        .HasForeignKey("AppUserId");
+                });
+
+            modelBuilder.Entity("Domain.RefreshToken", b =>
+                {
+                    b.HasOne("Domain.AppUser", "AppUser")
+                        .WithMany("RefreshToken")
                         .HasForeignKey("AppUserId");
                 });
 
